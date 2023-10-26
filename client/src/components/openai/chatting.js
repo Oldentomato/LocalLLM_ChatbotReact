@@ -15,7 +15,7 @@ const GPT_Chatting = () =>{
     const [query, setQuery] = useState("");
     const [answer, setAnswer] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [sel_model, setsel_model] = useState("GPT-3.5")
+    const [sel_model, setsel_model] = useState("gpt-3.5-turbo")
 
 
     const onChangeModel = ({target: {value}})=>{
@@ -27,26 +27,29 @@ const GPT_Chatting = () =>{
     //이것이 stream형식을 지원하지 않는다고 한다.
     //참고 https://yogae.github.io/etc/2019/06/11/node_client_stream.html
     const handleSubmit = useCallback(async (e) => {
-        setIsLoading(true)
-        e.preventDefault()
-    
-        // Send request
-        const url = new URL("/api/ai/sendquery", "http://localhost:5000");
-        url.searchParams.append("model_name", sel_model);
-        url.searchParams.append("message", query);
-        const response = await fetch(url);
-    
-        // Stream response
-        if (!response.body) throw new Error("No response body");
-        const reader = response.body.getReader();
-    
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          const text = new TextDecoder("utf-8").decode(value);
-          setAnswer((prevText) => prevText + text);
+        if(query !== ""){
+            setIsLoading(true)
+            e.preventDefault()
+        
+            // Send request
+            const url = new URL("/api/ai/sendquery", "http://localhost:5000");
+            url.searchParams.append("model_name", sel_model);
+            url.searchParams.append("message", query);
+            const response = await fetch(url);
+        
+            // Stream response
+            if (!response.body) throw new Error("No response body");
+            const reader = response.body.getReader();
+        
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              const text = new TextDecoder("utf-8").decode(value);
+              setAnswer((prevText) => prevText + text);
+            }
+            setIsLoading(false)
         }
-        setIsLoading(false)
+
       }, [setAnswer, setQuery, query]);
 
     const onQueryInput = (e) =>{
@@ -57,7 +60,7 @@ const GPT_Chatting = () =>{
     return (
         <div>
             <div>
-                <Radio.Group options={model_options} onChange={onChangeModel} value={sel_model} optionType="button" />
+                <Radio.Group options={model_options} onChange={onChangeModel} value={sel_model} defaultValue={sel_model} optionType="button" />
             </div>
                 <br />
             <div>

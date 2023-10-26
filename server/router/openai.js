@@ -3,11 +3,11 @@ const router = express.Router()
 const {LLMChain} = require('langchain/chains')
 const {OpenAI} = require("langchain/llms/openai")
 const {FewShotPromptTemplate, LengthBasedExampleSelector, PromptTemplate} = require("langchain/prompts")
-const {Chroma} = require("langchain/vectorstores")
+const {Chroma} = require("langchain/vectorstores/chroma")
 const {TokenTextSplitter} = require("langchain/text_splitter")
-const {PDFLoader} = require("langchain/document_loaders")
+const {PDFLoader} = require("langchain/document_loaders/fs/pdf")
 const {ChromaClient} = require("chromadb")
-const {OpenAIEmbeddings} = require("langchain/embeddings")
+const {OpenAIEmbeddings} = require("langchain/embeddings/openai")
 
 require('dotenv').config();
 
