@@ -21,7 +21,7 @@ const Set_PdfFile = async() =>{
         chunkOverlap: 20
     });
     const pdf = await textSplitter.splitDocuments(docs);
-    const embeddings = new OpenAIEmbeddings({openAIApiKey: TEST_KEY});
+    const embeddings = new OpenAIEmbeddings({openAIApiKey: process.env.OPENAI_API_KEY});
     const vectorDB = await Chroma.fromDocuments(pdf,embeddings,{});
 
     return vectorDB
@@ -73,7 +73,7 @@ router.get("/sendquery", async(req,res)=>{
         const model = new OpenAI({
             modelName: model_name,
             maxTokens: 200,
-            openAIApiKey: TEST_KEY,
+            openAIApiKey: process.env.OPENAI_API_KEY,
             streaming: true,
             temperature: 0.8,
             callbacks:[

@@ -5,8 +5,11 @@ import msgIcon from '../../../assets/message.svg'
 import home from '../../../assets/home.svg'
 import saved from '../../../assets/bookmark.svg'
 import sendBtn from '../../../assets/send.svg'
-import userIcon from '../../../assets/user-icon.png'
+// import userIcon from '../../../assets/user-icon.png'
+import userIcon from '../../../assets/ui.png'
 import gptImgLogo from '../../../assets/chatgptLogo.svg'
+import {Link} from 'react-router-dom';
+import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 
 function Chat_View(){
     const msgEnd = useRef();
@@ -15,7 +18,7 @@ function Chat_View(){
     const [answer, setAnswer] = useState("");
     const [isLoading, setIsLoading] = useState(false);
     const [messages, setMessages] = useState([{
-        text: "say somethig!",
+        text: "say something!",
         isBot: true
     }])
     const [sel_model, setsel_model] = useState("gpt-3.5-turbo");
@@ -63,6 +66,8 @@ function Chat_View(){
 
     }
 
+
+
     useEffect(()=>{
         msgEnd.current.scrollIntoView();
     },[messages, answer])
@@ -79,17 +84,27 @@ function Chat_View(){
                     </div>
                 </div>
                 <div className="lowerSide">
-                    <div className="listItems"><img src={home} alt="home" className="listItemsImg"/>Home</div>
+                    <div className="listItems"><img src={home} alt="home" className="listItemsImg"/><Link to="/"><p style={{color:"white"}}>Home</p></Link></div>
                     <div className="listItems"><img src={saved} alt="save" className="listItemsImg"/>Saved</div>
                 </div>
             </div>
             <div className="main">
                 <div className="chats">
-                    {messages.map((message, i)=>
-                        <div key={i} className={message.isBot?"chat bot":"chat"}>
-                            <img className="chatImg" src={message.isBot?gptImgLogo:userIcon} /> <p className="txt">{message.text}</p>
+                    <AnimatePresence>
+                        {messages.map((message, i)=>
+                            <Item key={i}>
+                                <div className={message.isBot?"chat bot":"chat"}>
+                                    <img className="chatImg" src={message.isBot?gptImgLogo:userIcon} /> <p className="txt">{message.text}</p>
+                                </div>
+                            </Item>
+
+                        )}
+                    </AnimatePresence>
+                    {(!answer && isLoading) &&
+                        <div className="chat bot">
+                            <img className="chatImg" src={gptImgLogo} /> <p className="txt">. . .</p>
                         </div>
-                    )}
+                    }
                     {answer &&
                         <div className="chat bot">
                             <img className="chatImg" src={gptImgLogo} /> <p className="txt">{answer}</p>
@@ -101,12 +116,29 @@ function Chat_View(){
                     <div className="inp">
                         <input type="text" placeholder="Send a message" onKeyDown={handleOnKeyPress} value={input} onChange={(e)=>{setInput(e.target.value)}}/><button className="send" onClick={handleSend}><img src={sendBtn} alt="Send"/></button>
                     </div>
-                    <p>ChatGPT may productalsidjalsdjiasldij</p>
+                    <p>Searching pdfs for uinetworks</p>
                 </div>
             </div>
         </div>
     )
 }
+const Item = ({ children, onClick }) => {
+    const isPresent = useIsPresent();
+    const animations = {
+      style: {
+        position: isPresent ? "static" : "absolute"
+      },
+      initial: { scale: 0, opacity: 0 },
+      animate: { scale: 1, opacity: 1 },
+      exit: { scale: 0, opacity: 0 },
+      transition: { type: "spring", stiffness: 900, damping: 40 }
+    };
+    return (
+      <motion.div {...animations}>
+        {children}
+      </motion.div>
+    );
+};
 
 
 export default Chat_View
