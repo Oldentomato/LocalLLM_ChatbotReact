@@ -65,7 +65,7 @@ body {
   scroll-behavior: smooth;
   width: 100%;
   max-width: 70rem;
-  height: calc(100vh - 17rem);
+  height: calc(100vh - 23rem);
 }
 
 .chats::-webkit-scrollbar {

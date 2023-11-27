@@ -19,7 +19,7 @@ import { message, Upload } from 'antd';
 const options = [
     {
       label: 'GPT-3.5',
-      value: 'GPT-3.5',
+      value: 'gpt-3.5-turbo',
     },
     {
       label: 'LocalModel',
@@ -30,6 +30,7 @@ const options = [
 function Chat_View(){
     const msgEnd = useRef();
 
+    const [uploadloading, setUploadLoading] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [input, setInput] = useState("");
     const [answer, setAnswer] = useState("");
@@ -38,7 +39,7 @@ function Chat_View(){
         text: "say something!",
         isBot: true
     }])
-    const [model, setModel] = useState('GPT-3.5');
+    const [model, setModel] = useState('gpt-3.5-turbo');
 
     const showModal = () => {
         setIsModalOpen(true);
@@ -71,12 +72,13 @@ function Chat_View(){
         setInput("")
         let response = null
 
-        if(model === "GPT-3.5"){
+        if(model === "gpt-3.5-turbo"){
             const url = new URL("/api/ai/sendquery", "http://localhost:5000");
-            url.searchParams.append("query", input);
+            url.searchParams.append("message", input);
+            url.searchParams.append("model_name", model);
             response = await fetch(url);
         }
-        else if(model === "localmodel"){
+        else if(model === "LocalModel"){
             const url = new URL("/model/llamaquery", "http://localhost:8000");
 
             const formData  = new FormData();
@@ -110,6 +112,31 @@ function Chat_View(){
 
     }
 
+    const beforeUpload = (file) => {
+        const isJpgOrPng = file.type === 'file/pdf' || file.type === 'image/png';
+        if (!isJpgOrPng) {
+          message.error('You can only upload JPG/PNG file!');
+        }
+        const isLt2M = file.size / 1024 / 1024 < 10;
+        if (!isLt2M) {
+          message.error('Pdf must smaller than 10MB!');
+        }
+        return isJpgOrPng && isLt2M;
+      };
+
+    const handleChange = (info) => {
+        if (info.file.status === 'uploading') {
+            setUploadLoading(true);
+          return;
+        }
+        if (info.file.status === 'done') {
+          // Get this url from response in real world.
+        //   getBase64(info.file.originFileObj, (url) => {
+        //     setUploadLoading(false);
+        //   });
+        }
+      };
+
 
 
     useEffect(()=>{
@@ -119,9 +146,26 @@ function Chat_View(){
     return(
         <div className="ChatView">
             <Modal title="Basic Modal" open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
-                <p>Some contents...</p>
-                <p>Some contents...</p>
-                <p>Some contents...</p>
+                <Upload
+                    name="avatar"
+                    listType="picture-card"
+                    className="file-uploader"
+                    showUploadList={false}
+                    action="https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188"
+                    beforeUpload={beforeUpload}
+                    onChange={handleChange}
+                >
+                    <div>
+                        {uploadloading ? <LoadingOutlined /> : <PlusOutlined />}
+                        <div
+                            style={{
+                            marginTop: 8,
+                            }}
+                        >
+                            Upload
+                        </div>
+                    </div>
+                </Upload>
             </Modal>
             <div className="sideBar">
                 <div className="upperSide">
