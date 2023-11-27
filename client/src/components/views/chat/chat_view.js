@@ -10,10 +10,27 @@ import userIcon from '../../../assets/ui.png'
 import gptImgLogo from '../../../assets/chatgptLogo.svg'
 import {Link} from 'react-router-dom';
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
+import { Radio } from 'antd';
+import { Button, Modal } from 'antd';
+import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
+import { message, Upload } from 'antd';
+
+
+const options = [
+    {
+      label: 'GPT-3.5',
+      value: 'GPT-3.5',
+    },
+    {
+      label: 'LocalModel',
+      value: 'LocalModel',
+    }
+  ];
 
 function Chat_View(){
     const msgEnd = useRef();
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [input, setInput] = useState("");
     const [answer, setAnswer] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -21,8 +38,23 @@ function Chat_View(){
         text: "say something!",
         isBot: true
     }])
-    const [sel_model, setsel_model] = useState("gpt-3.5-turbo");
+    const [model, setModel] = useState('GPT-3.5');
 
+    const showModal = () => {
+        setIsModalOpen(true);
+      };
+
+    const handleOk = () => {
+        setIsModalOpen(false);
+      };
+
+    const handleCancel = () => {
+        setIsModalOpen(false);
+      };
+
+    const modelChange = ({ target: { value } }) => {
+        setModel(value);
+      };
 
     const handleOnKeyPress = e => {
         if (e.key === 'Enter') {
@@ -37,11 +69,23 @@ function Chat_View(){
             {text: input, isBot: false}
           ])
         setInput("")
+        let response = null
 
-        const url = new URL("/api/ai/sendquery", "http://localhost:5000");
-        url.searchParams.append("model_name", sel_model);
-        url.searchParams.append("message", input);
-        const response = await fetch(url);
+        if(model === "GPT-3.5"){
+            const url = new URL("/api/ai/sendquery", "http://localhost:5000");
+            url.searchParams.append("query", input);
+            response = await fetch(url);
+        }
+        else if(model === "localmodel"){
+            const url = new URL("/model/llamaquery", "http://localhost:8000");
+
+            const formData  = new FormData();
+            formData.append("query", input);
+            response = await fetch(url,{
+                method: 'POST',
+                body: formData
+            });
+        }
 
 
         if (!response.body) throw new Error("No response body");
@@ -74,6 +118,11 @@ function Chat_View(){
 
     return(
         <div className="ChatView">
+            <Modal title="Basic Modal" open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
+                <p>Some contents...</p>
+                <p>Some contents...</p>
+                <p>Some contents...</p>
+            </Modal>
             <div className="sideBar">
                 <div className="upperSide">
                     <div className="upperSideTop"><img src={gptLogo} className="logo" alt="logo" /><span className="brand">SearchPDFs</span></div>
@@ -81,6 +130,11 @@ function Chat_View(){
                     <div className="upperSideBottom">
                         <button className="query"><img src={msgIcon} alt="query" />Test</button>
                         <button className="query"><img src={msgIcon} alt="query" />What is DeepLearning</button>
+                    </div>
+                    <div>
+                        <Button type="primary" onClick={showModal}>
+                            Upload PDF
+                        </Button>
                     </div>
                 </div>
                 <div className="lowerSide">
@@ -113,6 +167,8 @@ function Chat_View(){
                     <div ref={msgEnd} />
                 </div>
                 <div className="chatFooter">
+                    <Radio.Group optionType="button" buttonStyle="solid" options={options} onChange={modelChange} value={model} />
+                    <br />
                     <div className="inp">
                         <input type="text" placeholder="Send a message" onKeyDown={handleOnKeyPress} value={input} onChange={(e)=>{setInput(e.target.value)}}/><button className="send" onClick={handleSend}><img src={sendBtn} alt="Send"/></button>
                     </div>
