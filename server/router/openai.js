@@ -12,7 +12,6 @@ const {BufferMemory} = require("langchain/memory")
 require('dotenv').config();
 // const memory = new BufferMemory({returnMessages:true, memoryKey: "query"});
 
-
 const Set_PdfFile = async() =>{
     const loader = new PDFLoader("");
     const docs = await loader.load();

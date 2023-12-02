@@ -34,6 +34,7 @@ function Chat_View(){
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [input, setInput] = useState("");
     const [answer, setAnswer] = useState("");
+    const [filelist, setFilelist] = useState([])
     const [isLoading, setIsLoading] = useState(false);
     const [messages, setMessages] = useState([{
         text: "say something!",
@@ -45,9 +46,22 @@ function Chat_View(){
         setIsModalOpen(true);
       };
 
-    const handleOk = () => {
-        setIsModalOpen(false);
-      };
+    const handleOk = async() => {
+      setUploadLoading(true);
+      const url = new URL("/model/pdfembedding", "http://localhost:8000");
+      const formData = new FormData();
+      filelist.forEach(file => formData.append('pdfs', file))
+      let response = null
+
+      response = await fetch(url,{
+        method: 'POST',
+        body: formData
+      });
+      setUploadLoading(false);
+      setFilelist([])
+      setIsModalOpen(false);
+      
+    };
 
     const handleCancel = () => {
         setIsModalOpen(false);
@@ -121,19 +135,21 @@ function Chat_View(){
         if (!isLt2M) {
           message.error('Pdf must smaller than 10MB!');
         }
+
+        setFilelist(filelist.concat(file));
         return isJpgOrPng && isLt2M;
       };
 
-    const handleChange = (info) => {
+    const handleChange = async(info) => {
         if (info.file.status === 'uploading') {
             setUploadLoading(true);
-          return;
         }
         if (info.file.status === 'done') {
           // Get this url from response in real world.
         //   getBase64(info.file.originFileObj, (url) => {
         //     setUploadLoading(false);
         //   });
+        setUploadLoading(false);
         }
       };
 
@@ -145,15 +161,15 @@ function Chat_View(){
 
     return(
         <div className="ChatView">
-            <Modal title="Basic Modal" open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
+            <Modal title="PDF Uploader" open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
                 <Upload
                     name="avatar"
                     listType="picture-card"
                     className="file-uploader"
-                    showUploadList={false}
-                    action="https://run.mocky.io/v3/435e224c-44fb-4773-9faf-380c5e6a2188"
+                    showUploadList={true}
                     beforeUpload={beforeUpload}
                     onChange={handleChange}
+                    action = "http://localhost:8000/model/pdfembedding"
                 >
                     <div>
                         {uploadloading ? <LoadingOutlined /> : <PlusOutlined />}
