@@ -57,6 +57,7 @@ function Chat_View(){
         method: 'POST',
         body: formData
       });
+      message.success("upload successful!")
       setUploadLoading(false);
       setFilelist([])
       setIsModalOpen(false);
@@ -127,9 +128,9 @@ function Chat_View(){
     }
 
     const beforeUpload = (file) => {
-        const isJpgOrPng = file.type === 'file/pdf' || file.type === 'image/png';
+        const isJpgOrPng = file.type === 'application/pdf';
         if (!isJpgOrPng) {
-          message.error('You can only upload JPG/PNG file!');
+          message.error('You can only upload pdf file!');
         }
         const isLt2M = file.size / 1024 / 1024 < 10;
         if (!isLt2M) {
@@ -168,8 +169,7 @@ function Chat_View(){
                     className="file-uploader"
                     showUploadList={true}
                     beforeUpload={beforeUpload}
-                    onChange={handleChange}
-                    action = "http://localhost:8000/model/pdfembedding"
+                    // onChange={handleChange}
                 >
                     <div>
                         {uploadloading ? <LoadingOutlined /> : <PlusOutlined />}
