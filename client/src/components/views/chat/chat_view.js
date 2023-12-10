@@ -13,19 +13,52 @@ import { AnimatePresence, motion, useIsPresent } from "framer-motion";
 import { Radio } from 'antd';
 import { Button, Modal } from 'antd';
 import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
-import { message, Upload } from 'antd';
+import { message, Upload, Table  } from 'antd';
 
 
-const options = [
-    {
-      label: 'GPT-3.5',
-      value: 'gpt-3.5-turbo',
-    },
-    {
-      label: 'LocalModel',
-      value: 'LocalModel',
-    }
-  ];
+const model_options = [
+  // {
+  //   label: 'GPT-3.5',
+  //   value: 'gpt-3.5-turbo',
+  // },
+  {
+    label: 'LocalModel',
+    value: 'LocalModel',
+  },
+  {
+    label: 'SearchDoc',
+    value: 'SearchDoc',
+  }
+];
+
+const embedding_options = [
+  {
+    label: 'BERT',
+    value: 'bert',
+  },
+  {
+    label: 'TF-IDF',
+    value: 'tf-idf',
+  }
+];
+
+const columns = [
+  {
+    title: 'Content',
+    dataIndex: 'content',
+    key: 'content',
+  },
+  {
+    title: 'Source',
+    dataIndex: 'source',
+    key: 'source',
+  },
+  {
+    title: 'Page',
+    dataIndex: 'page',
+    key: 'page',
+  }
+]
 
 function Chat_View(){
     const msgEnd = useRef();
@@ -40,7 +73,8 @@ function Chat_View(){
         text: "say something!",
         isBot: true
     }])
-    const [model, setModel] = useState('gpt-3.5-turbo');
+    const [model, setModel] = useState('SearchDoc');
+    const [embeddingmodel, setEmbeddingModel] = useState('tf-idf');
 
     const showModal = () => {
         setIsModalOpen(true);
@@ -51,6 +85,9 @@ function Chat_View(){
       const url = new URL("/model/pdfembedding", "http://localhost:8000");
       const formData = new FormData();
       filelist.forEach(file => formData.append('pdfs', file))
+      if(embeddingmodel === 'tf-idf'){
+        formData.append('mode',embeddingmodel)
+      }
       let response = null
 
       response = await fetch(url,{
@@ -71,6 +108,10 @@ function Chat_View(){
     const modelChange = ({ target: { value } }) => {
         setModel(value);
       };
+
+    const embeddingChange = ({ target: { value } }) => {
+      setEmbeddingModel(value);
+    };
 
     const handleOnKeyPress = e => {
         if (e.key === 'Enter') {
@@ -102,28 +143,57 @@ function Chat_View(){
                 method: 'POST',
                 body: formData
             });
+
+            if (!response.body) throw new Error("No response body");
+            const reader = response.body.getReader();
+            let temp_str = ""
+    
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+              const text = new TextDecoder("utf-8").decode(value);
+              temp_str += text
+              setAnswer((prevText) => prevText + text);
+              
+            }
+            setMessages(()=>[
+                ...messages,
+                {text: input, isBot: false},
+                {text: temp_str, isBot: true}
+              ])
+            setAnswer("")
+            setIsLoading(false)
         }
+        else if(model === "SearchDoc"){
+          const url = new URL("/model/searchdoc", "http://localhost:8000");
 
+          const formData  = new FormData();
+          formData.append("query", input);
+          formData.append("doc_count", 1);
+          formData.append("mode", embeddingmodel);
+          response = await fetch(url,{
+              method: 'POST',
+              body: formData
+          });
 
-        if (!response.body) throw new Error("No response body");
-        const reader = response.body.getReader();
-        let temp_str = ""
-
-        while (true) {
+          if (!response.body) throw new Error("No response body");
+          const reader = response.body.getReader();
           const { done, value } = await reader.read();
-          if (done) break;
           const text = new TextDecoder("utf-8").decode(value);
-          temp_str += text
-          setAnswer((prevText) => prevText + text);
-          
-        }
-        setMessages(()=>[
+          const dict = JSON.parse(text)
+          const doc_template = {content: dict.doc,
+                                source: dict.source,
+                                page: dict.page}
+          setMessages(()=>[
             ...messages,
             {text: input, isBot: false},
-            {text: temp_str, isBot: true}
+            {text: doc_template, isBot: true}
           ])
-        setAnswer("")
-        setIsLoading(false)
+          setIsLoading(false)
+      }
+
+
+
 
     }
 
@@ -132,9 +202,9 @@ function Chat_View(){
         if (!isJpgOrPng) {
           message.error('You can only upload pdf file!');
         }
-        const isLt2M = file.size / 1024 / 1024 < 10;
+        const isLt2M = file.size / 1024 / 1024 < 50;
         if (!isLt2M) {
-          message.error('Pdf must smaller than 10MB!');
+          message.error('Pdf must smaller than 50MB!');
         }
 
         setFilelist(filelist.concat(file));
@@ -169,6 +239,8 @@ function Chat_View(){
                     className="file-uploader"
                     showUploadList={true}
                     beforeUpload={beforeUpload}
+                    onRemove={handleOk}
+                    
                     // onChange={handleChange}
                 >
                     <div>
@@ -208,7 +280,8 @@ function Chat_View(){
                         {messages.map((message, i)=>
                             <Item key={i}>
                                 <div className={message.isBot?"chat bot":"chat"}>
-                                    <img className="chatImg" src={message.isBot?gptImgLogo:userIcon} /> <p className="txt">{message.text}</p>
+                                    <img className="chatImg" src={message.isBot?gptImgLogo:userIcon} /> 
+                                    {typeof message.text === "object" ? <Table columns={columns} dataSource={[message.text]} /> : <p className="txt">{message.text}</p>}
                                 </div>
                             </Item>
 
@@ -227,7 +300,9 @@ function Chat_View(){
                     <div ref={msgEnd} />
                 </div>
                 <div className="chatFooter">
-                    <Radio.Group optionType="button" buttonStyle="solid" options={options} onChange={modelChange} value={model} />
+                    <Radio.Group optionType="button" buttonStyle="solid" options={embedding_options} onChange={embeddingChange} value={embeddingmodel} />
+                    <br />
+                    <Radio.Group optionType="button" buttonStyle="solid" options={model_options} onChange={modelChange} value={model} />
                     <br />
                     <div className="inp">
                         <input type="text" placeholder="Send a message" onKeyDown={handleOnKeyPress} value={input} onChange={(e)=>{setInput(e.target.value)}}/><button className="send" onClick={handleSend}><img src={sendBtn} alt="Send"/></button>
