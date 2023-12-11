@@ -39,6 +39,10 @@ const embedding_options = [
   {
     label: 'TF-IDF',
     value: 'tf-idf',
+  },
+  {
+    label: 'Doc2Vec',
+    value: 'doc2vec',
   }
 ];
 
@@ -85,9 +89,9 @@ function Chat_View(){
       const url = new URL("/model/pdfembedding", "http://localhost:8000");
       const formData = new FormData();
       filelist.forEach(file => formData.append('pdfs', file))
-      if(embeddingmodel === 'tf-idf'){
-        formData.append('mode',embeddingmodel)
-      }
+      formData.append('mode',embeddingmodel)
+
+
       let response = null
 
       response = await fetch(url,{
@@ -232,14 +236,16 @@ function Chat_View(){
 
     return(
         <div className="ChatView">
-            <Modal title="PDF Uploader" open={isModalOpen} onOk={handleOk} onCancel={handleCancel}>
+            <Modal title="PDF Uploader" open={isModalOpen} onOk={handleOk} 
+            onCancel={handleCancel} closable={false} okButtonProps={{ disabled: uploadloading }} 
+            cancelButtonProps= {{disabled: uploadloading}}
+            maskClosable={uploadloading?false:true}>
                 <Upload
                     name="avatar"
                     listType="picture-card"
                     className="file-uploader"
                     showUploadList={true}
                     beforeUpload={beforeUpload}
-                    onRemove={handleOk}
                     
                     // onChange={handleChange}
                 >
