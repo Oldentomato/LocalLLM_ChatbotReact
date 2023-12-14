@@ -10,8 +10,7 @@ import userIcon from '../../../assets/ui.png'
 import gptImgLogo from '../../../assets/chatgptLogo.svg'
 import {Link} from 'react-router-dom';
 import { AnimatePresence, motion, useIsPresent } from "framer-motion";
-import { Radio } from 'antd';
-import { Button, Modal } from 'antd';
+import { Button, Modal, Radio, Pagination  } from 'antd';
 import { LoadingOutlined, PlusOutlined } from '@ant-design/icons';
 import { message, Upload, Table  } from 'antd';
 
@@ -43,6 +42,14 @@ const embedding_options = [
   {
     label: 'Doc2Vec',
     value: 'doc2vec',
+  },
+  {
+    label: 'BM25',
+    value: 'bm25',
+  },
+  {
+    label: 'BM25+BERT',
+    value: 'bmbert',
   }
 ];
 
@@ -58,9 +65,9 @@ const columns = [
     key: 'source',
   },
   {
-    title: 'Page',
-    dataIndex: 'page',
-    key: 'page',
+    title: 'Score',
+    dataIndex: 'score',
+    key: 'score',
   }
 ]
 
@@ -79,6 +86,11 @@ function Chat_View(){
     }])
     const [model, setModel] = useState('SearchDoc');
     const [embeddingmodel, setEmbeddingModel] = useState('tf-idf');
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const handleChangePage = (page) => {
+      setCurrentPage(page);
+    };
 
     const showModal = () => {
         setIsModalOpen(true);
@@ -173,7 +185,7 @@ function Chat_View(){
 
           const formData  = new FormData();
           formData.append("query", input);
-          formData.append("doc_count", 1);
+          formData.append("doc_count", 5); //숫자 상수
           formData.append("mode", embeddingmodel);
           response = await fetch(url,{
               method: 'POST',
@@ -185,9 +197,13 @@ function Chat_View(){
           const { done, value } = await reader.read();
           const text = new TextDecoder("utf-8").decode(value);
           const dict = JSON.parse(text)
-          const doc_template = {content: dict.doc,
-                                source: dict.source,
-                                page: dict.page}
+          let doc_template = []
+          for(var i=0; i<5; i++){ //숫자 상수
+            doc_template.push({content: dict.doc[i],
+              source: dict.source[i]+" page: "+dict.page[i],
+            score: parseFloat(dict.score[i]).toFixed(2)})
+          }
+
           setMessages(()=>[
             ...messages,
             {text: input, isBot: false},
@@ -287,7 +303,17 @@ function Chat_View(){
                             <Item key={i}>
                                 <div className={message.isBot?"chat bot":"chat"}>
                                     <img className="chatImg" src={message.isBot?gptImgLogo:userIcon} /> 
-                                    {typeof message.text === "object" ? <Table columns={columns} dataSource={[message.text]} /> : <p className="txt">{message.text}</p>}
+                                    {typeof message.text === "object" ? <div><Table columns={columns} 
+                                                                          dataSource={[message.text[currentPage - 1]]} 
+                                                                          pagination={false}
+                                                                          />
+                                                                          <Pagination 
+                                                                            current={currentPage}
+                                                                            total={message.text.length}
+                                                                            pageSize={1}
+                                                                            showSizeChanger={false} 
+                                                                            onChange={handleChangePage}
+                                                                          /></div> : <p className="txt">{message.text}</p>}
                                 </div>
                             </Item>
 
