@@ -181,11 +181,11 @@ function Chat_View(){
             setIsLoading(false)
         }
         else if(model === "SearchDoc"){
-          const url = new URL("/model/searchdoc", "http://localhost:8000");
+          const url = new URL("/model/searchdoc", "https://334b-121-66-45-243.ngrok.io");
 
           const formData  = new FormData();
           formData.append("query", input);
-          formData.append("doc_count", 5); //숫자 상수
+          formData.append("doc_count", 3); //숫자 상수
           formData.append("mode", embeddingmodel);
           response = await fetch(url,{
               method: 'POST',
@@ -198,7 +198,7 @@ function Chat_View(){
           const text = new TextDecoder("utf-8").decode(value);
           const dict = JSON.parse(text)
           let doc_template = []
-          for(var i=0; i<5; i++){ //숫자 상수
+          for(var i=0; i<3; i++){ //숫자 상수
             doc_template.push({content: dict.doc[i],
               source: dict.source[i]+" page: "+dict.page[i],
             score: parseFloat(dict.score[i]).toFixed(2)})
