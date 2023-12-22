@@ -35,14 +35,10 @@ const embedding_options = [
     label: 'BERT',
     value: 'bert',
   },
-  {
-    label: 'TF-IDF',
-    value: 'tf-idf',
-  },
-  {
-    label: 'Doc2Vec',
-    value: 'doc2vec',
-  },
+  // {
+  //   label: 'TF-IDF',
+  //   value: 'tf-idf',
+  // },
   {
     label: 'BM25',
     value: 'bm25',
@@ -96,9 +92,12 @@ function Chat_View(){
         setIsModalOpen(true);
       };
 
+    //http://localhost:8000
+    const FETCH_URL = "https://7570-121-66-45-243.ngrok-free.app"
+
     const handleOk = async() => {
       setUploadLoading(true);
-      const url = new URL("/model/pdfembedding", "http://localhost:8000");
+      const url = new URL("/model/pdfembedding", FETCH_URL);
       const formData = new FormData();
       filelist.forEach(file => formData.append('pdfs', file))
       formData.append('mode',embeddingmodel)
@@ -151,7 +150,7 @@ function Chat_View(){
             response = await fetch(url);
         }
         else if(model === "LocalModel"){
-            const url = new URL("/model/llamaquery", "http://localhost:8000");
+            const url = new URL("/model/llamaquery", FETCH_URL);
 
             const formData  = new FormData();
             formData.append("query", input);
@@ -181,7 +180,7 @@ function Chat_View(){
             setIsLoading(false)
         }
         else if(model === "SearchDoc"){
-          const url = new URL("/model/searchdoc", "https://334b-121-66-45-243.ngrok.io");
+          const url = new URL("/model/searchdoc", FETCH_URL);
 
           const formData  = new FormData();
           formData.append("query", input);

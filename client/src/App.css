@@ -64,7 +64,7 @@ body {
   overflow-y: scroll;
   scroll-behavior: smooth;
   width: 100%;
-  max-width: 70rem;
+  max-width: 90rem;
   height: calc(100vh - 23rem);
 }
 
@@ -222,5 +222,5 @@ input[type="text"]
 }
 
 .chatFooter>p {
-  margin: 2rem 0;
+  margin: 0.5rem 0;
 }
